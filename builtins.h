@@ -1,4 +1,4 @@
-/* Copyright (c) 2017 Dennis Wölfing
+/* Copyright (c) 2018 Dennis Wölfing
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -13,30 +13,15 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* utils/utils.h
- * Common utility functions.
+/* sh/builtins.h
+ * Shell builtins.
  */
 
-#ifndef UTILS_H
-#define UTILS_H
+#ifndef BUILTINS_H
+#define BUILTINS_H
 
-#include <stdio.h>
+extern char* pwd;
 
-#ifndef DENNIX_VERSION
-#  define DENNIX_VERSION ""
-#endif
-
-#define UNUSED __attribute__((unused))
-
-static UNUSED int help(const char* argv0, const char* helpstr) {
-    printf("Usage: %s ", argv0);
-    puts(helpstr);
-    return 0;
-}
-
-static UNUSED int version(const char* argv0) {
-    printf("%s (Dennix) %s\n", argv0, DENNIX_VERSION);
-    return 0;
-}
+int cd(int argc, char* argv[]);
 
 #endif
