@@ -1,4 +1,4 @@
-# Copyright (c) 2018, 2019, 2020, 2021, 2022 Dennis Wölfing
+# Copyright (c) 2018, 2019, 2020, 2021, 2022, 2025 Dennis Wölfing
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -12,18 +12,11 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-REPO_ROOT = ..
-
-include $(REPO_ROOT)/build-aux/arch.mk
-include $(REPO_ROOT)/build-aux/paths.mk
-include $(REPO_ROOT)/build-aux/toolchain.mk
-include $(REPO_ROOT)/build-aux/version.mk
-
-BUILD = $(BUILD_DIR)/sh
-
 CFLAGS ?= -O2 -g
-CFLAGS += --sysroot=$(SYSROOT) -fstack-protector-strong -Wall -Wextra
-CPPFLAGS += -D_DENNIX_SOURCE -DDENNIX_VERSION=\"$(VERSION)\"
+CFLAGS += -fstack-protector-strong -Wall -Wextra
+CPPFLAGS += -D_DENNIX_SOURCE -DDENNIX_VERSION=\"0.9dev\"
+
+prefix =
 
 OBJ = \
 	builtins.o \
@@ -38,24 +31,19 @@ OBJ = \
 	trap.o \
 	variables.o
 
-all: $(BUILD)/sh
+all: sh
 
-OBJ := $(addprefix $(BUILD)/, $(OBJ))
--include $(OBJ:.o=.d)
+install: sh
+	@mkdir -p $(DESTDIR)$(prefix)/bin
+	cp -f $^ $(DESTDIR)$(prefix)/bin
 
-install: $(BUILD)/sh
-	@mkdir -p $(BIN_DIR)
-	cp -f $^ $(BIN_DIR)
-	touch $(SYSROOT)
-
-$(BUILD)/sh: $(OBJ)
+sh: $(OBJ)
 	$(CC) -o $@ $^
 
-$(BUILD)/%.o: %.c
-	@mkdir -p $(BUILD)
-	$(CC) $(CFLAGS) $(CPPFLAGS) -MD -MP -c -o $@ $<
+%.o: %.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 clean:
-	rm -rf $(BUILD)
+	rm -rf sh *.o
 
 .PHONY: all install clean
