@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, 2019, 2020, 2022 Dennis Wölfing
+/* Copyright (c) 2018, 2019, 2020, 2022, 2025 Dennis Wölfing
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -13,12 +13,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* sh/sh.h
+/* dxsh.h
  * Shell defintions.
  */
 
-#ifndef SH_H
-#define SH_H
+#ifndef DXSH_H
+#define DXSH_H
 
 #include <stdbool.h>
 #include <stdnoreturn.h>

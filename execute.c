@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, 2019, 2020, 2021, 2022 Dennis Wölfing
+/* Copyright (c) 2018, 2019, 2020, 2021, 2022, 2025 Dennis Wölfing
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -13,10 +13,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* sh/execute.c
+/* execute.c
  * Shell command execution.
  */
 
+#include <config.h>
 #include <assert.h>
 #include <err.h>
 #include <errno.h>
@@ -35,7 +36,7 @@
 #include "execute.h"
 #include "expand.h"
 #include "match.h"
-#include "sh.h"
+#include "dxsh.h"
 #include "trap.h"
 #include "variables.h"
 

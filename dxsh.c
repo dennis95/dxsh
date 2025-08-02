@@ -1,4 +1,4 @@
-/* Copyright (c) 2016, 2017, 2018, 2019, 2020, 2021, 2022 Dennis Wölfing
+/* Copyright (c) 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2025 Dennis Wölfing
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -13,10 +13,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* sh/sh.c
+/* dxsh.c
  * The shell.
  */
 
+#include <config.h>
 #include <assert.h>
 #include <err.h>
 #include <errno.h>
@@ -37,10 +38,6 @@
 #include "parser.h"
 #include "trap.h"
 #include "variables.h"
-
-#ifndef DENNIX_VERSION
-#  define DENNIX_VERSION ""
-#endif
 
 struct CompleteCommand* currentCommand;
 bool endOfFileReached;
@@ -297,7 +294,7 @@ static int parseOptions(int argc, char* argv[]) {
                 help(argv[0]);
                 exit(0);
             } else if (strcmp(arg, "version") == 0) {
-                printf("%s (Dennix) %s\n", argv[0], DENNIX_VERSION);
+                printf("%s (%s)\n", argv[0], PACKAGE_STRING);
                 exit(0);
             } else {
                 errx(1, "unrecognized option '--%s'", arg);

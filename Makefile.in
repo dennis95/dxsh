@@ -1,0 +1,118 @@
+# Copyright (c) 2018, 2019, 2020, 2021, 2022, 2025 Dennis Wölfing
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+srcdir = @srcdir@
+VPATH = @srcdir@
+
+CC = @CC@
+CFLAGS = @CFLAGS@
+CPPFLAGS = @CPPFLAGS@ -I.
+LDFLAGS = @LDFLAGS@
+LIBS = @LIBS@
+
+INSTALL = @INSTALL@
+INSTALL_DATA = @INSTALL_DATA@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_SCRIPT = @INSTALL_SCRIPT@
+install_sh = $(srcdir)/install-sh
+STRIP = @STRIP@
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+
+transform = @program_transform_name@
+
+SRC = \
+	builtins.c \
+	dxsh.c \
+	execute.c \
+	expand.c \
+	interactive.c \
+	match.c \
+	parser.c \
+	stringbuffer.c \
+	tokenizer.c \
+	trap.c \
+	variables.c
+
+HEADERS = \
+	builtins.h \
+	dxsh.h \
+	execute.h \
+	expand.h \
+	interactive.h \
+	match.h \
+	parser.h \
+	stringbuffer.h \
+	tokenizer.h \
+	trap.h \
+	variables.h
+
+OBJ = $(SRC:%.c=%.o)
+
+distdir = @PACKAGE_NAME@-@PACKAGE_VERSION@
+DISTFILES = $(SRC) $(HEADERS) \
+	m4/ m4/check-cflags.m4 \
+	.gitignore \
+	configure.ac configure config.h.in Makefile.in install-sh \
+	autogen.sh \
+	LICENSE
+
+all: dxsh
+
+dxsh: $(OBJ)
+	$(CC) $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
+
+.c.o:
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
+$(OBJ): $(HEADERS) config.h Makefile
+
+check installcheck:
+	@echo "No tests implemented."
+
+dist:
+	rm -rf $(distdir)
+	mkdir $(distdir)
+	for file in $(DISTFILES); do \
+		case $$file in \
+		*/) mkdir -p $(distdir)/$$file ;; \
+		*) cp $(srcdir)/$$file $(distdir)/$$file; \
+		esac; \
+	done
+	tar cJf $(distdir).tar.xz $(distdir)
+	rm -rf $(distdir)
+
+install: install-exec
+install-exec: dxsh
+	mkdir -p '$(DESTDIR)$(bindir)'
+	$(INSTALL_PROGRAM) dxsh "$(DESTDIR)$(bindir)/$$(echo dxsh | sed '$(transform)')"
+
+install-strip: install-strip-exec
+install-strip-exec:
+	mkdir -p '$(DESTDIR)$(bindir)'
+	STRIPPROG='$(STRIP)' $(install_sh) -s dxsh "$(DESTDIR)$(bindir)/$$(echo dxsh | sed '$(transform)')"
+
+uninstall:
+	rm -f "$(DESTDIR)$(bindir)/$$(echo dxsh | sed '$(transform)')"
+
+clean:
+	rm -f dxsh *.o *~
+
+distclean: clean
+	rm -rf autom4te.cache
+	rm -f config.cache config.h config.h.in~ config.status config.log Makefile
+
+.PHONY: all check installcheck dist install install-exec install-strip
+.PHONY: install-strip-exec uninstall clean distclean

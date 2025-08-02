@@ -1,4 +1,4 @@
-/* Copyright (c) 2022 Dennis Wölfing
+/* Copyright (c) 2022, 2025 Dennis Wölfing
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -13,10 +13,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* sh/trap.c
+/* trap.c
  * Traps.
  */
 
+#include <config.h>
 #include <err.h>
 #include <errno.h>
 #include <limits.h>

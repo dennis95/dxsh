@@ -1,4 +1,4 @@
-/* Copyright (c) 2020, 2021, 2022 Dennis Wölfing
+/* Copyright (c) 2020, 2021, 2022, 2025 Dennis Wölfing
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -13,10 +13,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* sh/interactive.c
+/* interactive.c
  * Interactive input.
  */
 
+#include <config.h>
 #include <ctype.h>
 #include <dirent.h>
 #include <err.h>
@@ -31,7 +32,7 @@
 #include "builtins.h"
 #include "execute.h"
 #include "interactive.h"
-#include "sh.h"
+#include "dxsh.h"
 #include "trap.h"
 #include "variables.h"
 

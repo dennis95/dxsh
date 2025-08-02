@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, 2019, 2020, 2021, 2022 Dennis Wölfing
+/* Copyright (c) 2018, 2019, 2020, 2021, 2022, 2025 Dennis Wölfing
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -13,14 +13,14 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* sh/expand.h
+/* expand.h
  * Word expansion.
  */
 
 #ifndef EXPAND_H
 #define EXPAND_H
 
-#include "sh.h"
+#include "dxsh.h"
 
 struct SubstitutionInfo {
     size_t begin;

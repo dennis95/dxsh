@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, 2020, 2021, 2022 Dennis Wölfing
+/* Copyright (c) 2019, 2020, 2021, 2022, 2025 Dennis Wölfing
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -13,17 +13,18 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* sh/variables.c
+/* variables.c
  * Shell variables.
  */
 
+#include <config.h>
 #include <ctype.h>
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "sh.h"
+#include "dxsh.h"
 #include "variables.h"
 
 extern char** environ;
