@@ -47,7 +47,22 @@ SRC = \
 	stringbuffer.c \
 	tokenizer.c \
 	trap.c \
-	variables.c
+	variables.c \
+	builtins/break.c \
+	builtins/cd.c \
+	builtins/colon.c \
+	builtins/continue.c \
+	builtins/dot.c \
+	builtins/eval.c \
+	builtins/exec.c \
+	builtins/exit.c \
+	builtins/export.c \
+	builtins/read.c \
+	builtins/return.c \
+	builtins/set.c \
+	builtins/shift.c \
+	builtins/umask.c \
+	builtins/unset.c
 
 HEADERS = \
 	builtins.h \
@@ -61,12 +76,13 @@ HEADERS = \
 	system.h \
 	tokenizer.h \
 	trap.h \
-	variables.h
+	variables.h \
+	builtins/builtins.h
 
 OBJ = $(SRC:%.c=%.o) @LIBOBJS@
 
 distdir = @PACKAGE_NAME@-@PACKAGE_VERSION@
-DISTFILES = $(SRC) $(HEADERS) \
+DISTFILES = builtins/ $(SRC) $(HEADERS) \
 	compat/ compat/sig2str.c compat/signalnames.c compat/signalnames.h \
 	compat/str2sig.c compat/tcgetwinsize.c \
 	m4/ m4/check-cflags.m4 m4/tcgetwinsize.m4 \
@@ -128,7 +144,7 @@ uninstall:
 	rm -f "$(DESTDIR)$(bindir)/$$(echo dxsh | sed '$(transform)')"
 
 clean:
-	rm -f dxsh *.o compat/*.o *~
+	rm -f dxsh *.o builtins/*.o compat/*.o *~
 
 distclean: clean
 	rm -rf autom4te.cache
