@@ -18,7 +18,6 @@
  */
 
 #include <config.h>
-#include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <limits.h>
@@ -29,6 +28,7 @@
 #include <sys/stat.h>
 
 #include "builtins.h"
+#include "dxsh.h"
 #include "execute.h"
 #include "stringbuffer.h"
 #include "trap.h"

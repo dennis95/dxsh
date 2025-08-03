@@ -46,7 +46,7 @@ enum {
 };
 
 NO_DISCARD ssize_t expand(const char* word, int flags, char*** result);
-NO_DISCARD ssize_t expand2(const char* word, int flags, char*** fields,
+NO_DISCARD ssize_t expand2(const char* word, int flags, char*** result,
         struct ExpandContext* context);
 char* expandWord(const char* word);
 char* expandWord2(const char* word, int flags);

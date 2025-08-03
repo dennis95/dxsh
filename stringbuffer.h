@@ -23,8 +23,6 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#include "dxsh.h"
-
 struct StringBuffer {
     char* buffer;
     size_t used;

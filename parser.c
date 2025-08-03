@@ -26,9 +26,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "expand.h"
+#include "dxsh.h"
 #include "parser.h"
-#include "stringbuffer.h"
 
 #define BACKTRACKING // specify that a function might return PARSER_BACKTRACK.
 

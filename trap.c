@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "dxsh.h"
 #include "execute.h"
 #include "system.h"
 #include "trap.h"

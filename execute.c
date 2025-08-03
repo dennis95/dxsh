@@ -190,7 +190,7 @@ static int executePipeline(struct Pipeline* pipeline) {
 
                     // Wait until all processes in the pipeline have started.
                     char c;
-                    read(pgidPipe[0], &c, 1);
+                    (void) read(pgidPipe[0], &c, 1);
                     close(pgidPipe[0]);
                 }
             }

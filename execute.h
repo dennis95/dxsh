@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, 2021, 2022 Dennis Wölfing
+/* Copyright (c) 2018, 2021, 2022, 2025 Dennis Wölfing
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -13,13 +13,14 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* sh/execute.h
+/* execute.h
  * Shell command execution.
  */
 
 #ifndef EXECUTE_H
 #define EXECUTE_H
 
+#include <stdnoreturn.h>
 #include "parser.h"
 
 extern struct Function** functions;

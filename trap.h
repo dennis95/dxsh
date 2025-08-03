@@ -21,8 +21,8 @@
 #define TRAP_H
 
 #include <signal.h>
-
-#include "dxsh.h"
+#include <stdbool.h>
+#include <stdnoreturn.h>
 
 extern bool executingTrap;
 extern volatile sig_atomic_t trapsPending;

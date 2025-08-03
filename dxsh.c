@@ -20,7 +20,6 @@
 #include <config.h>
 #include <assert.h>
 #include <err.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <setjmp.h>
@@ -32,8 +31,8 @@
 #include <unistd.h>
 
 #include "builtins.h"
+#include "dxsh.h"
 #include "execute.h"
-#include "expand.h"
 #include "interactive.h"
 #include "parser.h"
 #include "trap.h"
