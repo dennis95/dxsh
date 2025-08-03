@@ -9,6 +9,7 @@ confdefs.h
 conftest
 conftest.c
 conftest.o
+distcheck
 install-sh
 Makefile
 dxsh

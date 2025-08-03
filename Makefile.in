@@ -100,6 +100,20 @@ dist:
 	tar cJf $(distdir).tar.xz $(distdir)
 	rm -rf $(distdir)
 
+distcheck: dist
+	rm -rf distcheck
+	mkdir -p distcheck/build
+	cd distcheck && tar xf ../$(distdir).tar.xz && chmod -R a-w $(distdir) && \
+	cd build && ../$(distdir)/configure --prefix=$(PWD)/distcheck/install && \
+	$(MAKE) && $(MAKE) check && \
+	$(MAKE) install && $(MAKE) installcheck && \
+	$(MAKE) uninstall && ! find $(PWD)/distcheck/install -type f | grep . && \
+	$(MAKE) dist && rm -f $(distdir).tar.xz && \
+	$(MAKE) distclean && ! find $(PWD)/distcheck/build -type f | grep .
+	chmod -R +w distcheck
+	rm -rf distcheck
+	@echo "Files are ready for distribution."
+
 install: install-exec
 install-exec: dxsh
 	mkdir -p '$(DESTDIR)$(bindir)'
@@ -120,5 +134,5 @@ distclean: clean
 	rm -rf autom4te.cache
 	rm -f config.cache config.h config.h.in~ config.status config.log Makefile
 
-.PHONY: all check installcheck dist install install-exec install-strip
+.PHONY: all check installcheck dist distcheck install install-exec install-strip
 .PHONY: install-strip-exec uninstall clean distclean
