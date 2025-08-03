@@ -29,10 +29,15 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
+#if HAVE_SYS_IOCTL_H
+#  include <sys/ioctl.h> // Required on Linux for struct winsize.
+#endif
+
 #include "builtins.h"
+#include "dxsh.h"
 #include "execute.h"
 #include "interactive.h"
-#include "dxsh.h"
+#include "system.h"
 #include "trap.h"
 #include "variables.h"
 

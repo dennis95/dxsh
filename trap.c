@@ -26,10 +26,11 @@
 #include <string.h>
 
 #include "execute.h"
+#include "system.h"
 #include "trap.h"
 
 #ifndef NSIG_MAX
-#  define NSIG_MAX (sizeof(sigset_t) * CHAR_BIT + 1)
+#  define NSIG_MAX ((int) sizeof(sigset_t) * CHAR_BIT + 1)
 #endif
 
 enum {
