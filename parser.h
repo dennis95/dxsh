@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, 2019, 2020, 2021, 2022 Dennis Wölfing
+/* Copyright (c) 2018, 2019, 2020, 2021, 2022, 2025 Dennis Wölfing
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -13,7 +13,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* sh/parser.h
+/* parser.h
  * Shell parser.
  */
 
@@ -159,6 +159,7 @@ void freeParser(struct Parser* parser);
 void initParser(struct Parser* parser,
         bool (*readInput)(const char** str, bool newCommand, void* context),
         void* context);
+bool isReservedWord(const char* word);
 enum ParserResult parse(struct Parser* parser,
         struct CompleteCommand* command, bool readWholeScript);
 enum ParserResult parseCommandSubstitution(struct Parser* parser,

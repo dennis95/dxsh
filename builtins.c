@@ -18,6 +18,7 @@
  */
 
 #include <config.h>
+#include <stddef.h>
 
 #include "builtins.h"
 #include "builtins/builtins.h"
@@ -27,6 +28,7 @@ const struct builtin builtins[] = {
     { ":", colon, BUILTIN_SPECIAL }, // : must be the first entry in this list.
     { "break", sh_break, BUILTIN_SPECIAL },
     { "cd", cd, 0 },
+    { "command", command, 0 },
     { "continue", sh_continue, BUILTIN_SPECIAL },
     { ".", dot, BUILTIN_SPECIAL },
     { "eval", eval, BUILTIN_SPECIAL },

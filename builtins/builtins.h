@@ -23,6 +23,7 @@
 int sh_break(int argc, char* argv[]);
 int cd(int argc, char* argv[]);
 int colon(int argc, char* argv[]);
+int command(int argc, char* argv[]);
 int sh_continue(int argc, char* argv[]);
 int dot(int argc, char* argv[]);
 int eval(int argc, char* argv[]);

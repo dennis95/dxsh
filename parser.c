@@ -87,7 +87,7 @@ void initParser(struct Parser* parser,
     initTokenizer(&parser->tokenizer, readInput, context);
 }
 
-static bool isReservedWord(const char* word) {
+bool isReservedWord(const char* word) {
     static const char* reservedWords[]= { "!", "{", "}", "case", "do", "done",
             "elif", "else", "esac", "fi", "for", "if", "in", "then", "until",
             "while", NULL };

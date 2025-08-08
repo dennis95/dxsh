@@ -51,6 +51,7 @@ SRC = \
 	builtins/break.c \
 	builtins/cd.c \
 	builtins/colon.c \
+	builtins/command.c \
 	builtins/continue.c \
 	builtins/dot.c \
 	builtins/eval.c \

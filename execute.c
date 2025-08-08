@@ -66,6 +66,9 @@ static int executeList(struct List* list);
 static int executePipeline(struct Pipeline* pipeline);
 static int executeSimpleCommand(struct SimpleCommand* simpleCommand,
         bool subshell);
+static bool expandSimpleCommand(const struct SimpleCommand* simpleCommand,
+        struct ExpandedSimpleCommand* expanded);
+static void freeExpandedSimpleCommand(struct ExpandedSimpleCommand* expanded);
 static bool performRedirection(struct Redirection* redirection, bool noSave);
 static bool performRedirections(struct Redirection* redirections,
         size_t numRedirections, bool noSave);
@@ -499,26 +502,27 @@ static bool isDeclarationUtility(char** words, size_t numWords) {
     if (strcmp(words[0], "export") == 0) {
         return true;
     }
+    if (strcmp(words[0], "command") == 0) {
+        return isDeclarationUtility(words + 1, numWords - 1);
+    }
     return false;
 }
 
-static int executeSimpleCommand(struct SimpleCommand* simpleCommand,
-        bool subshell) {
-    int result = 1;
-
-    size_t numRedirections = simpleCommand->numRedirections;
-    struct Redirection* redirections = calloc(numRedirections,
+static bool expandSimpleCommand(const struct SimpleCommand* simpleCommand,
+        struct ExpandedSimpleCommand* expanded) {
+    expanded->numRedirections = simpleCommand->numRedirections;
+    expanded->redirections = calloc(expanded->numRedirections,
             sizeof(struct Redirection));
-    if (!redirections) err(1, "malloc");
-    size_t numAssignments = simpleCommand->numAssignmentWords;
-    char** assignments = calloc(numAssignments, sizeof(char*));
-    if (!assignments) err(1, "malloc");
+    if (!expanded->redirections) err(1, "malloc");
+    expanded->numAssignments = simpleCommand->numAssignmentWords;
+    expanded->assignments = calloc(expanded->numAssignments, sizeof(char*));
+    if (!expanded->assignments) err(1, "malloc");
 
     bool declUtility = isDeclarationUtility(simpleCommand->words,
             simpleCommand->numWords);
 
-    char** arguments = NULL;
-    size_t numArguments = 0;
+    expanded->arguments = NULL;
+    expanded->numArguments = 0;
     for (size_t i = 0; i < simpleCommand->numWords; i++) {
         char** fields;
         int flags = EXPAND_PATHNAMES;
@@ -534,70 +538,104 @@ static int executeSimpleCommand(struct SimpleCommand* simpleCommand,
         }
 
         ssize_t numFields = expand(simpleCommand->words[i], flags, &fields);
-        if (numFields < 0) goto cleanup;
-        addMultipleToArray((void**) &arguments, &numArguments, fields,
-                sizeof(char*), numFields);
+        if (numFields < 0) {
+            freeExpandedSimpleCommand(expanded);
+            return false;
+        }
+        addMultipleToArray((void**) &expanded->arguments,
+                &expanded->numArguments, fields, sizeof(char*), numFields);
         free(fields);
     }
 
-    addToArray((void**) &arguments, &numArguments, &(void*){NULL},
-            sizeof(char*));
+    addToArray((void**) &expanded->arguments, &expanded->numArguments,
+            &(void*){NULL}, sizeof(char*));
 
-    for (size_t i = 0; i < numRedirections; i++) {
-        redirections[i] = simpleCommand->redirections[i];
-        if (redirections[i].type != REDIR_HERE_DOC_QUOTED) {
-            int flags = redirections[i].type == REDIR_HERE_DOC ?
+    for (size_t i = 0; i < expanded->numRedirections; i++) {
+        expanded->redirections[i] = simpleCommand->redirections[i];
+        if (expanded->redirections[i].type != REDIR_HERE_DOC_QUOTED) {
+            int flags = expanded->redirections[i].type == REDIR_HERE_DOC ?
                     EXPAND_NO_QUOTES : 0;
-            redirections[i].filename = expandWord2(redirections[i].filename,
-                    flags);
-            if (!redirections[i].filename) goto cleanup;
+            expanded->redirections[i].filename =
+                    expandWord2(expanded->redirections[i].filename, flags);
+            if (!expanded->redirections[i].filename) {
+                freeExpandedSimpleCommand(expanded);
+                return false;
+            }
         }
     }
 
-    for (size_t i = 0; i < numAssignments; i++) {
-        assignments[i] = expandWord(simpleCommand->assignmentWords[i]);
-        if (!assignments[i]) goto cleanup;
+    for (size_t i = 0; i < expanded->numAssignments; i++) {
+        expanded->assignments[i] =
+                expandWord(simpleCommand->assignmentWords[i]);
+        if (!expanded->assignments[i]) {
+            freeExpandedSimpleCommand(expanded);
+            return false;
+        }
     }
 
-    int argc = numArguments - 1;
-    const char* command = arguments[0];
-    const struct builtin* builtin = NULL;
-    struct Function* function = NULL;
-    if (command) {
-        // Check for built-ins.
-        for (const struct builtin* b = builtins; b->name; b++) {
-            if (strcmp(command, b->name) == 0) {
-                builtin = b;
+    return true;
+}
+
+void findBuiltinOrFunction(const char* command, const struct builtin** builtin,
+        struct Function** function) {
+    for (const struct builtin* b = builtins; b->name; b++) {
+        if (strcmp(command, b->name) == 0) {
+            *builtin = b;
+            break;
+        }
+    }
+    if (function && (!*builtin || !((*builtin)->flags & BUILTIN_SPECIAL))) {
+        for (size_t i = 0; i < numFunctions; i++) {
+            if (strcmp(command, functions[i]->name) == 0) {
+                *builtin = NULL;
+                *function = functions[i];
                 break;
             }
         }
-        if (!builtin || !(builtin->flags & BUILTIN_SPECIAL)) {
-            for (size_t i = 0; i < numFunctions; i++) {
-                if (strcmp(command, functions[i]->name) == 0) {
-                    builtin = NULL;
-                    function = functions[i];
-                    break;
-                }
-            }
-        }
+    }
+}
+
+static int executeSimpleCommand(struct SimpleCommand* simpleCommand,
+        bool subshell) {
+    struct ExpandedSimpleCommand expandedCommand;
+    if (!expandSimpleCommand(simpleCommand, &expandedCommand)) {
+        if (subshell) _Exit(1);
+        return 1;
+    }
+
+    int status = executeExpandedCommand(&expandedCommand, subshell, true, NULL);
+    freeExpandedSimpleCommand(&expandedCommand);
+    return status;
+}
+
+int executeExpandedCommand(struct ExpandedSimpleCommand* expanded,
+        bool subshell, bool useFunctions, const char* path) {
+    int result = 1;
+    int argc = expanded->numArguments - 1;
+    const char* command = expanded->arguments[0];
+    const struct builtin* builtin = NULL;
+    struct Function* function = NULL;
+    if (command) {
+        findBuiltinOrFunction(command, &builtin,
+                useFunctions ? &function : NULL);
     } else {
         builtin = &builtins[0]; // the : builtin
     }
 
     if (builtin || function) {
-        for (size_t i = 0; i < numAssignments; i++) {
-            char* equals = strchr(assignments[i], '=');
+        for (size_t i = 0; i < expanded->numAssignments; i++) {
+            char* equals = strchr(expanded->assignments[i], '=');
             *equals = '\0';
             if (!builtin || !(builtin->flags & BUILTIN_SPECIAL)) {
-                pushVariable(assignments[i], equals + 1);
+                pushVariable(expanded->assignments[i], equals + 1);
             } else {
-                setVariable(assignments[i], equals + 1, false);
+                setVariable(expanded->assignments[i], equals + 1, false);
             }
-            free(assignments[i]);
+            free(expanded->assignments[i]);
         }
-        free(assignments);
-        assignments = NULL;
-        numAssignments = 0;
+        free(expanded->assignments);
+        expanded->assignments = NULL;
+        expanded->numAssignments = 0;
     }
 
     if (!builtin && !function && !subshell) {
@@ -621,30 +659,32 @@ static int executeSimpleCommand(struct SimpleCommand* simpleCommand,
     }
 
     bool noSave = builtin && strcmp(builtin->name, "exec") == 0;
-    if (!performRedirections(redirections, numRedirections, noSave)) {
+    if (!performRedirections(expanded->redirections, expanded->numRedirections,
+            noSave)) {
         if (!builtin) _Exit(1);
         result = 1;
         goto cleanup;
     }
 
-    for (size_t i = 0; i < numRedirections; i++) {
-        if (redirections[i].type != REDIR_HERE_DOC_QUOTED) {
-            free((void*) redirections[i].filename);
+    for (size_t i = 0; i < expanded->numRedirections; i++) {
+        if (expanded->redirections[i].type != REDIR_HERE_DOC_QUOTED) {
+            free((void*) expanded->redirections[i].filename);
         }
     }
-    free(redirections);
-    redirections = NULL;
+    free(expanded->redirections);
+    expanded->redirections = NULL;
 
     if (builtin) {
-        result = builtin->func(argc, arguments);
+        result = builtin->func(argc, expanded->arguments);
     } else if (function) {
-        result = executeFunction(function, argc, arguments);
+        result = executeFunction(function, argc, expanded->arguments);
     } else {
-        executeUtility(argc, arguments, assignments, numAssignments);
+        executeUtility(argc, expanded->arguments, expanded->assignments,
+                expanded->numAssignments, path);
     }
 
     if (!noSave) {
-        for (size_t i = 0; i < numRedirections; i++) {
+        for (size_t i = 0; i < expanded->numRedirections; i++) {
             popRedirection();
         }
     }
@@ -652,29 +692,32 @@ static int executeSimpleCommand(struct SimpleCommand* simpleCommand,
 cleanup:
     if (subshell) _Exit(result);
     popVariables();
-    for (size_t i = 0; i < numArguments; i++) {
-        free(arguments[i]);
-    }
-    free(arguments);
-    if (redirections) {
-        for (size_t i = 0; i < numRedirections; i++) {
-            if (redirections[i].type != REDIR_HERE_DOC_QUOTED) {
-                free((void*) redirections[i].filename);
-            }
-        }
-        free(redirections);
-    }
-    if (assignments) {
-        for (size_t i = 0; i < numAssignments; i++) {
-            free(assignments[i]);
-        }
-        free(assignments);
-    }
     return result;
 }
 
+static void freeExpandedSimpleCommand(struct ExpandedSimpleCommand* expanded) {
+    for (size_t i = 0; i < expanded->numArguments; i++) {
+        free(expanded->arguments[i]);
+    }
+    free(expanded->arguments);
+    if (expanded->redirections) {
+        for (size_t i = 0; i < expanded->numRedirections; i++) {
+            if (expanded->redirections[i].type != REDIR_HERE_DOC_QUOTED) {
+                free((void*) expanded->redirections[i].filename);
+            }
+        }
+        free(expanded->redirections);
+    }
+    if (expanded->assignments) {
+        for (size_t i = 0; i < expanded->numAssignments; i++) {
+            free(expanded->assignments[i]);
+        }
+        free(expanded->assignments);
+    }
+}
+
 noreturn void executeUtility(int argc, char** arguments, char** assignments,
-        size_t numAssignments) {
+        size_t numAssignments, const char* path) {
     const char* command = arguments[0];
 
     for (size_t i = 0; i < numAssignments; i++) {
@@ -690,7 +733,7 @@ noreturn void executeUtility(int argc, char** arguments, char** assignments,
     if (!command) _Exit(0);
 
     if (!strchr(command, '/')) {
-        command = getExecutablePath(command, true);
+        command = getExecutablePath(command, true, path);
     }
 
     if (command) {
@@ -709,10 +752,13 @@ noreturn void executeUtility(int argc, char** arguments, char** assignments,
     }
 }
 
-char* getExecutablePath(const char* command, bool checkExecutable) {
+char* getExecutablePath(const char* command, bool checkExecutable,
+        const char* path) {
     size_t commandLength = strlen(command);
-    const char* path = getVariable("PATH");
-    if (!path) return NULL;
+    if (!path) {
+        path = getVariable("PATH");
+        if (!path) return NULL;
+    }
 
     while (true) {
         size_t length = strcspn(path, ":");

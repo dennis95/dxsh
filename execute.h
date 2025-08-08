@@ -21,7 +21,17 @@
 #define EXECUTE_H
 
 #include <stdnoreturn.h>
+#include "builtins.h"
 #include "parser.h"
+
+struct ExpandedSimpleCommand {
+    char** arguments;
+    size_t numArguments;
+    struct Redirection* redirections;
+    size_t numRedirections;
+    char** assignments;
+    size_t numAssignments;
+};
 
 extern struct Function** functions;
 extern size_t numFunctions;
@@ -34,10 +44,15 @@ extern int returnStatus;
 
 int execute(struct CompleteCommand* command);
 int executeAndRead(struct CompleteCommand* command, struct StringBuffer* sb);
+int executeExpandedCommand(struct ExpandedSimpleCommand* expanded,
+        bool subshell, bool useFunctions, const char* path);
 noreturn void executeUtility(int argc, char** arguments, char** assignments,
-        size_t numAssignments);
+        size_t numAssignments, const char* path);
+void findBuiltinOrFunction(const char* command, const struct builtin** builtin,
+        struct Function** function);
 void freeRedirections(void);
-char* getExecutablePath(const char* command, bool checkExecutable);
+char* getExecutablePath(const char* command, bool checkExecutable,
+        const char* path);
 void unsetFunction(const char* name);
 void unsetFunctions(void);
 

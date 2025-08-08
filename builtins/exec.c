@@ -36,5 +36,5 @@ int exec(int argc, char* argv[]) {
     }
 
     if (i == argc) return 0;
-    executeUtility(argc - i, argv + i, NULL, 0);
+    executeUtility(argc - i, argv + i, NULL, 0, NULL);
 }

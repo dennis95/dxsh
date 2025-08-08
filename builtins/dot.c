@@ -72,7 +72,7 @@ int dot(int argc, char* argv[]) {
 
     char* pathname = argv[i];
     if (!strchr(pathname, '/')) {
-        pathname = getExecutablePath(pathname, false);
+        pathname = getExecutablePath(pathname, false, NULL);
         if (!pathname) {
             errno = ENOENT;
             warn(".: '%s'", argv[i]);
