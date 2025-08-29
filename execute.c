@@ -134,7 +134,11 @@ static int executeList(struct List* list) {
 
 static int executePipeline(struct Pipeline* pipeline) {
     if (pipeline->numCommands <= 1) {
-        return executeCommand(&pipeline->commands[0], false);
+        int status = executeCommand(&pipeline->commands[0], false);
+        if (pipeline->bang) {
+            status = !status;
+        }
+        return status;
     }
 
     int inputFd = -1;
