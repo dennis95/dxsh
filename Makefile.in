@@ -32,6 +32,7 @@ prefix = @prefix@
 exec_prefix = @exec_prefix@
 bindir = @bindir@
 
+cross_compiling = @cross_compiling@
 transform = @program_transform_name@
 
 LIBOBJDIR = compat/
@@ -87,6 +88,9 @@ DISTFILES = builtins/ $(SRC) $(HEADERS) \
 	compat/ compat/sig2str.c compat/signalnames.c compat/signalnames.h \
 	compat/str2sig.c compat/tcgetwinsize.c \
 	m4/ m4/check-cflags.m4 m4/tcgetwinsize.m4 \
+	test/ test/builtins.sh test/commands.sh test/expand.sh test/libtest.sh \
+	test/parameters.sh test/pattern.sh test/quoting.sh test/redirection.sh \
+	test/run-tests \
 	.gitignore \
 	configure.ac configure config.h.in Makefile.in install-sh \
 	autogen.sh \
@@ -102,8 +106,19 @@ dxsh: $(OBJ)
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
 $(OBJ): $(HEADERS) config.h compat/signalnames.h Makefile
 
-check installcheck:
-	@echo "No tests implemented."
+check: check-$(cross_compiling)
+check-yes:
+	@echo "Cannot run tests when cross-compiling."
+check-no: dxsh
+	$(srcdir)/test/run-tests ./dxsh
+	$(srcdir)/test/run-tests ./dxsh ./dxsh
+
+installcheck: installcheck-$(cross_compiling)
+installcheck-yes:
+	@echo "Cannot run tests when cross-compiling."
+installcheck-no: dxsh
+	$(srcdir)/test/run-tests "$(bindir)/$$(echo dxsh | sed '$(transform)')"
+	$(srcdir)/test/run-tests "$(bindir)/$$(echo dxsh | sed '$(transform)')" "$(bindir)/$$(echo dxsh | sed '$(transform)')"
 
 dist:
 	rm -rf $(distdir)
@@ -151,5 +166,6 @@ distclean: clean
 	rm -rf autom4te.cache
 	rm -f config.cache config.h config.h.in~ config.status config.log Makefile
 
-.PHONY: all check installcheck dist distcheck install install-exec install-strip
+.PHONY: all check check-yes check-no installcheck installcheck-yes
+.PHONY: installcheck-no dist distcheck install install-exec install-strip
 .PHONY: install-strip-exec uninstall clean distclean

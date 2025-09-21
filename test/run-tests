@@ -1,0 +1,87 @@
+# Copyright (c) 2025 Dennis Wölfing
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+# The tests are run using two shells, the test shell and the run shell. The test
+# shell is the shell to be tested and the run shell is the shell that starts the
+# tests and checks the results. This test script can be invoked as
+# $ run-tests [test_shell [run_shell]]
+#
+# If one or both parameters are omitted, the $SHELL variable is used for them.
+# Arguments to the shells may be passed as part of these parameters, which will
+# be subject to field splitting. This allows for example to pass "-o posix" to
+# shells where this has an effect. Do not pass any arguments that would cause
+# the shell to behave differently from POSIX sh, or tests will fail.
+#
+# The tests assume that $PATH is set appropriately so that POSIX utilities can
+# be invoked.
+
+if test "$#${test_shell+y}${test_shell_args+y}${run_shell+y}${run_shell_args+y}" != 0yyyy; then
+    abs_path() (
+        cd "$(dirname "$1")" && echo "$(pwd)/$(basename "$1")"
+    )
+
+    set_test_shell() {
+        export test_shell="$(abs_path "$(command -v "$1")")"
+        shift
+        export test_shell_args="$*"
+    }
+    set_test_shell ${1-$SHELL}
+    set_run_shell() {
+        export run_shell="$(abs_path "$(command -v "$1")")"
+        shift
+        export run_shell_args="$*"
+    }
+    set_run_shell ${2-$SHELL}
+
+    # Re-exec ourselves to ensure we are using run_shell.
+    exec "$run_shell" $run_shell_args "$0"
+
+    echo "This should be unreachable."
+    exit 1
+fi
+
+# Unset environment variables that may affect behavior of the shell.
+unset CDPATH BASH_ENV ENV GLOBIGNORE
+export LC_ALL=C
+umask 002
+
+export test_script_dir="$(cd "$(dirname "$0")" && pwd)"
+export test_exec_dir="$(pwd)/test_exec"
+rm -rf "$test_exec_dir"
+mkdir "$test_exec_dir"
+cd "$test_exec_dir"
+
+echo "Running tests for $test_shell" $test_shell_args
+echo "Running test script on $run_shell" $run_shell_args
+echo "PATH = $PATH"
+
+. "${test_script_dir:?}/libtest.sh"
+
+# Before running the test suite, check that $test_shell is a shell at all.
+if test "$(test_shell -c 'msg="Hello World"; echo "$msg"')" != "Hello World"; then
+    echo "error: Shell does not work."
+    exit 1
+fi
+
+for test_set in quoting parameters expand redirection commands pattern builtins
+do
+    run_shell "$test_script_dir/$test_set.sh" || tests_failed=true
+done
+
+rm -rf "$test_exec_dir"
+
+if $tests_failed; then
+    echo "Some tests failed."
+    exit 1
+fi
