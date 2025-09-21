@@ -94,7 +94,7 @@ DISTFILES = builtins/ $(SRC) $(HEADERS) \
 	.gitignore \
 	configure.ac configure config.h.in Makefile.in install-sh \
 	autogen.sh \
-	LICENSE
+	LICENSE README.md
 
 all: dxsh
 
