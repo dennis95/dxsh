@@ -18,10 +18,13 @@
  */
 
 #include <config.h>
+#include <assert.h>
 #include <err.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/stat.h>
 
 #include "builtins.h"
 #include "../builtins.h"
@@ -51,7 +54,8 @@ static char* getNewLogicalPwd(const char* oldPwd, const char* dir) {
             char* lastSlash = strrchr(newPwd, '/');
             if (lastSlash == newPwd) {
                 pwdEnd = newPwd + 1;
-            } else if (lastSlash) {
+            } else {
+                assert(lastSlash != NULL);
                 pwdEnd = lastSlash;
             }
         } else {
@@ -72,34 +76,139 @@ static char* getNewLogicalPwd(const char* oldPwd, const char* dir) {
 }
 
 int cd(int argc, char* argv[]) {
-    const char* newCwd;
-    if (argc >= 2) {
-        newCwd = argv[1];
+    bool logical = true;
+    bool errorPwd = false;
+
+    int i;
+    for (i = 1; i < argc; i++) {
+        if (argv[i][0] != '-' || argv[i][1] == '\0') break;
+        if (argv[i][1] == '-' && argv[i][2] == '\0') {
+            i++;
+            break;
+        }
+        for (size_t j = 1; argv[i][j]; j++) {
+            if (argv[i][j] == 'e') {
+                errorPwd = true;
+            } else if (argv[i][j] == 'L') {
+                logical = true;
+            } else if (argv[i][j] == 'P') {
+                logical = false;
+            } else {
+                warnx("cd: invalid option '-%c'", argv[i][j]);
+                return 2;
+            }
+        }
+
+    }
+
+    if (i + 1 < argc) {
+        warnx("cd: extra operand");
+        return 2;
+    }
+
+    const char* directory;
+    bool printPwd = false;
+
+    if (i < argc) {
+        directory = argv[i];
+        if (!*directory) {
+            warnx("cd: invalid operand ''");
+            return 2;
+        } else if (strcmp(directory, "-") == 0) {
+            directory = getVariable("OLDPWD");
+            printPwd = true;
+            if (!directory || !*directory) {
+                warnx("cd: OLDPWD undefined");
+                return 2;
+            }
+        }
     } else {
-        newCwd = getVariable("HOME");
-        if (!newCwd) {
-            warnx("HOME not set");
-            return 1;
+        directory = getVariable("HOME");
+        if (!directory || !*directory) {
+            warnx("cd: HOME unset or empty");
+            return 2;
         }
     }
 
-    if (!pwd) {
-        if (chdir(newCwd) < 0) {
-            warn("cd: '%s'", newCwd);
-            return 1;
-        }
+    void* toBeFreed = NULL;
 
-        pwd = getcwd(NULL, 0);
-    } else {
-        char* newPwd = getNewLogicalPwd(pwd, newCwd);
+    const char* curpath = directory;
+    if (directory[0] != '/') {
+        size_t firstComponentLength = strcspn(directory, "/");
+        if (strncmp(directory, ".", firstComponentLength) != 0 &&
+                strncmp(directory, "..", firstComponentLength) != 0) {
+            const char* cdpath = getVariable("CDPATH");
+            if (!cdpath) {
+                cdpath = "";
+            }
+            size_t directoryLength = strlen(directory);
+            bool end = false;
+
+            while (!end) {
+                size_t prefixLength = strcspn(cdpath, ":");
+                const char* prefix = cdpath;
+                cdpath += prefixLength;
+                if (!*cdpath) {
+                    end = true;
+                }
+                cdpath += 1;
+                bool emptyPrefix = false;
+                if (prefixLength == 0) {
+                    prefix = ".";
+                    prefixLength = 1;
+                    emptyPrefix = true;
+                }
+
+                char* path = malloc(prefixLength + 1 + directoryLength + 1);
+                if (!path) err(1, "malloc");
+                stpcpy(stpcpy(mempcpy(path, prefix, prefixLength), "/"),
+                        directory);
+
+                struct stat st;
+                if (stat(path, &st) == 0) {
+                    if (S_ISDIR(st.st_mode)) {
+                        toBeFreed = path;
+                        curpath = path;
+                        printPwd = !emptyPrefix;
+                        break;
+                    }
+                }
+
+                free(path);
+            }
+        }
+    }
+
+    char* oldPwd = pwd;
+    int status = 0;
+
+    if (logical && pwd) {
+        char* newPwd = getNewLogicalPwd(pwd, curpath);
+        free(toBeFreed);
         if (!newPwd || chdir(newPwd) < 0) {
-            warn("cd: '%s'", newCwd);
+            warn("cd: '%s'", curpath);
             free(newPwd);
-            return 1;
+            return 2;
         }
 
-        free(pwd);
         pwd = newPwd;
+    } else {
+        if (chdir(curpath) < 0) {
+            warn("cd: '%s'", curpath);
+            free(toBeFreed);
+            return 2;
+        }
+
+        free(toBeFreed);
+        pwd = getcwd(NULL, 0);
+        if (!pwd && errorPwd) {
+            status = 1;
+        }
+    }
+
+    if (printPwd && pwd) {
+        puts(pwd);
+        fflush(stdout);
     }
 
     if (pwd) {
@@ -107,5 +216,11 @@ int cd(int argc, char* argv[]) {
     } else {
         unsetVariable("PWD");
     }
-    return 0;
+    if (oldPwd) {
+        setVariable("OLDPWD", oldPwd, true);
+        free(oldPwd);
+    } else {
+        unsetVariable("OLDPWD");
+    }
+    return status;
 }

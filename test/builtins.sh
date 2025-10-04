@@ -472,31 +472,51 @@ rm -f foo
 
 test_case 'builtins:intrinsic:cd'
 assert_intrinsic cd "cd ."
-mkdir foo bar baz
+mkdir -p foo/bar baz
 echo foo > foo/file
-echo bar > bar/file
+echo bar > foo/bar/file
 echo baz > baz/file
 echo parent > file
+ln -s foo/bar link
 test_shell_succeed << "EOF"
 parent_dir=$PWD
 cd foo
 cat file
 cd ..
 cat file
-export HOME="$parent_dir/bar"
+export HOME="$parent_dir/foo/bar"
 cd
 cat file
-cd $parent_dir/baz
+cd "$parent_dir/baz"
 cat file
-# TODO: -eLP options, CDPATH, OLDPWD
+cd "$parent_dir/link"
+cd ..
+cat file
+cd "$parent_dir/link"
+cd -P ..
+cat file
+cd "$parent_dir/link"
+cd -P -L ..
+cat file
+cd - >/dev/null
+cat file
+export CDPATH="$parent_dir/foo"
+cd "$parent_dir"
+cd bar >/dev/null
+cat file
 EOF
 assert_output << EOF
 foo
 parent
 bar
 baz
+parent
+foo
+parent
+bar
+bar
 EOF
-rm -rf foo bar baz
+rm -rf foo baz link file
 
 test_case 'builtins:intrinsic:command'
 assert_intrinsic command "command :"
