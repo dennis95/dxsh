@@ -1,4 +1,4 @@
-# Copyright (c) 2025 Dennis Wölfing
+# Copyright (c) 2025, 2026 Dennis Wölfing
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -196,5 +196,35 @@ check_file_expansion 'a[b/c]d' 'a[b/c]d' '!abd' '!a/d'
 check_file_expansion '*/?' 'a/b' '!c/d/e' 'c/d'
 check_file_expansion 'a\/b/*' 'a/b/c'
 check_file_expansion 'a\*c/*' 'a*c/x' '!abc/x'
+
+test_case 'pattern:prefix_suffix_removal'
+# assert_pattern_removal VALUE PATTERN PREFIX GPREFIX SUFFIX GSUFFIX
+assert_pattern_removal() {
+    test_shell_succeed -s "$1" << EOF
+echo "prefix \${1#$2}"
+echo "greedy prefix \${1##$2}"
+echo "suffix \${1%$2}"
+echo "greedy suffix \${1%%$2}"
+EOF
+    assert_output << EOF
+prefix $3
+greedy prefix $4
+suffix $5
+greedy suffix $6
+EOF
+}
+
+assert_pattern_removal x '' x x x x
+assert_pattern_removal abcacxabcxacabc 'a*c' acxabcxacabc '' abcacxabcxac ''
+assert_pattern_removal xby 'x[a-c]y' '' '' '' ''
+# TODO: Fails due to fnmatch bugs: assert_pattern_removal '/a\' '[/\\]' 'a\' 'a\' '/a' '/a'
+assert_pattern_removal AB. '[[:upper:]][[:punct:]]' 'AB.' 'AB.' 'A' 'A'
+# TODO: Fails due to fnmatch bugs: assert_pattern_removal ab '[\\[:alpha:]]' 'b' 'b' 'a' 'a'
+assert_pattern_removal xy '[[.x.]]' 'y' 'y' 'xy' 'xy'
+assert_pattern_removal xyz '"x"' 'yz' 'yz' 'xyz' 'xyz'
+assert_pattern_removal 'a*' '"*"' 'a*' 'a*' 'a' 'a'
+assert_pattern_removal 'ab?' '\?' 'ab?' 'ab?' 'ab' 'ab'
+assert_pattern_removal 'ax[ab]' '[ab"]"' 'ax[ab]' 'ax[ab]' 'ax' 'ax'
+
 
 end_test_set

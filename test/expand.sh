@@ -1,4 +1,4 @@
-# Copyright (c) 2025 Dennis Wölfing
+# Copyright (c) 2025, 2026 Dennis Wölfing
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -136,7 +136,23 @@ assert_output << EOF
 6 0 24 9 0
 EOF
 
-# TODO: Prefix/suffix removal
+test_case 'expand:parameter:prefix_suffix'
+test_shell_succeed << "EOF"
+var=abababa
+echo ${var%ba}
+echo ${var%%ba}
+echo ${var#ab}
+echo ${var##ab}
+echo ${var%x}
+EOF
+assert_output << EOF
+ababa
+ababa
+ababa
+ababa
+abababa
+EOF
+# Non-trivial patterns are tested in pattern.sh
 
 test_case 'expand:command:new_style'
 test_shell_succeed << "EOF"

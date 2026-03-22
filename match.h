@@ -1,4 +1,4 @@
-/* Copyright (c) 2021 Dennis Wölfing
+/* Copyright (c) 2021, 2026 Dennis Wölfing
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -13,7 +13,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* sh/match.h
+/* match.h
  * Pattern matching.
  */
 
@@ -26,5 +26,7 @@ bool matchesPattern(const char* expandedWord, const char* pattern);
 bool expandPathnames(char** fields, size_t numFields, char*** pathnames,
         size_t* numPathnames, struct SubstitutionInfo* subst,
         size_t numSubstitutions);
+size_t stripPrefixSuffix(const char* word, const char* pattern, bool isPrefix,
+        bool greedy);
 
 #endif

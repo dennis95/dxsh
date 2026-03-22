@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, 2022, 2025 Dennis Wölfing
+/* Copyright (c) 2021, 2022, 2025, 2026 Dennis Wölfing
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -287,4 +287,86 @@ bool expandPathnames(char** fields, size_t numFields, char*** pathnames,
     }
 
     return true;
+}
+
+size_t stripPrefixSuffix(const char* word, const char* pattern, bool isPrefix,
+        bool greedy) {
+    struct ExpandContext context;
+    char** fields;
+    ssize_t numFields = expand2(pattern, EXPAND_NO_FIELD_SPLIT, &fields,
+            &context);
+    if (numFields < 0) return false;
+
+    bool containsSpecial;
+    char* prepared = preparePattern(fields[0], 0, context.substitutions,
+            context.numSubstitutions, false, &containsSpecial);
+    free(context.substitutions);
+    free(context.temp);
+    free(fields);
+
+    char* dupWord = strdup(word);
+    if (!dupWord) err(1, "malloc");
+
+    size_t wordLength = strlen(word);
+
+    size_t start;
+    size_t end;
+    bool countUp;
+    size_t* counter;
+
+    if (isPrefix) {
+        if (greedy) {
+            // Begin with trying to match the whole word, then remove charcaters
+            // at the end until a match is found.
+            start = 0;
+            end = wordLength;
+            counter = &end;
+            countUp = false;
+        } else {
+            // Begin with trying to match the empty string at the start of the
+            // word, then add characters until a match is found.
+            start = 0;
+            end = 0;
+            counter = &end;
+            countUp = true;
+        }
+    } else {
+        if (greedy) {
+            // Begin with trying to match the whole word, then remove charcaters
+            // at the start until a match is found.
+            start = 0;
+            end = wordLength;
+            counter = &start;
+            countUp = true;
+        } else {
+            // Begin with trying to match the empty string at the end of the
+            // word, then add characters until a match is found.
+            start = wordLength;
+            end = wordLength;
+            counter = &start;
+            countUp = false;
+        }
+    }
+
+    while (true) {
+        dupWord[end] = '\0';
+        if (fnmatch(prepared, dupWord + start, 0) == 0) {
+            free(dupWord);
+            free(prepared);
+            return end - start;
+        }
+        dupWord[end] = word[end];
+
+        if (countUp) {
+            if (*counter >= wordLength) break;
+            (*counter)++;
+        } else {
+            if (*counter == 0) break;
+            (*counter)--;
+        }
+    }
+
+    free(dupWord);
+    free(prepared);
+    return 0;
 }

@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, 2019, 2020, 2021, 2022, 2025 Dennis Wölfing
+/* Copyright (c) 2018, 2019, 2020, 2021, 2022, 2025, 2026 Dennis Wölfing
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -291,8 +291,7 @@ static ssize_t doDollarSubstitutions(const char* word, bool doubleQuoted,
             }
         }
 
-        // TODO: Implement prefix and suffix removal.
-        size_t nameLength = strcspn(word + 1, "+-:=?}") + 1;
+        size_t nameLength = strcspn(word + 1, "#%+-:=?}") + 1;
         char* name = strndup(word, nameLength);
         if (!name) err(1, "strdup");
 
@@ -376,6 +375,30 @@ static ssize_t doDollarSubstitutions(const char* word, bool doubleQuoted,
                     free(subst);
                     value = NULL;
                 }
+            } else if (c == '%' || c == '#') {
+                if (nullMeansUnset) {
+                    return -1;
+                }
+
+                bool prefix = c == '#';
+                bool greedy = *word == c;
+                if (greedy) {
+                    word++;
+                    wordLength--;
+                }
+                char* pattern = strndup(word, wordLength);
+                if (!pattern) err(1, "malloc");
+
+                size_t stripLength = stripPrefixSuffix(value, pattern, prefix,
+                        greedy);
+                free(pattern);
+
+                size_t stripPrefix = prefix ? stripLength : 0;
+                char* strippedValue = strndup(value + stripPrefix,
+                        strlen(value) - stripLength);
+                if (!strippedValue) err(1, "malloc");
+                toBeFreed = strippedValue;
+                value = strippedValue;
             }
             word += wordLength;
         }
