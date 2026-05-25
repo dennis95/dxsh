@@ -505,6 +505,10 @@ static char* doSubstitutions(const char* word, struct ExpandContext* context) {
     return finishStringBuffer(&sb);
 }
 
+static bool isIfsWhiteSpace(char c) {
+    return c == ' ' || c == '\t' || c == '\n';
+}
+
 static size_t splitFields(char* word, struct ExpandContext* context,
         char*** result) {
     const char* ifs = getVariable("IFS");
@@ -515,39 +519,51 @@ static size_t splitFields(char* word, struct ExpandContext* context,
     size_t fieldOffset = 0;
     size_t wordLength = strlen(word);
 
+    // Iterate over applied substitutions as fields splitting only aplies to
+    // substituted bytes.
     for (size_t i = 0; i < context->numSubstitutions; i++) {
         struct SubstitutionInfo* subst = &context->substitutions[i];
         subst->begin -= fieldOffset;
         subst->startField = numFields;
+
         size_t splitBegin = subst->begin;
         while (subst->applyFieldSplitting && fieldOffset < subst->end) {
             size_t length = splitBegin + strcspn(word + fieldOffset +
                     splitBegin, ifs);
             splitBegin = 0;
+
             if (fieldOffset + length >= subst->end) break;
-            if (fieldOffset + length != 0) {
+            if (fieldOffset + length != 0 || !isIfsWhiteSpace(word[0])) {
                 char* field = word + fieldOffset;
                 addToArray((void**) &fields, &numFields, &field, sizeof(char*));
             }
+
             fieldOffset += length;
-            bool nonWhitespace = !isspace(word[fieldOffset]);
+            bool nonWhitespace = !isIfsWhiteSpace(word[fieldOffset]);
+            bool emptyInput = fieldOffset == 0;
+
             word[fieldOffset++] = '\0';
 
             length = strspn(word + fieldOffset, ifs);
+            if (fieldOffset + length > subst->end) {
+                length = subst->end - fieldOffset;
+            }
+
             for (size_t j = 0; j < length; j++) {
-                if (!isspace(word[fieldOffset + j])) {
-                    if (nonWhitespace) {
+                if (!isIfsWhiteSpace(word[fieldOffset + j])) {
+                    if (nonWhitespace || emptyInput) {
                         word[fieldOffset + j] = '\0';
                         char* field = word + fieldOffset + j;
                         addToArray((void**) &fields, &numFields, &field,
                                 sizeof(char*));
-                    } else {
-                        nonWhitespace = true;
                     }
+                    nonWhitespace = true;
                 }
             }
+
             fieldOffset += length;
         }
+
         subst->endField = numFields;
         subst->end -= fieldOffset;
 

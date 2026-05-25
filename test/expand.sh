@@ -205,7 +205,7 @@ EOF
 
 test_case 'expand:field_split'
 test_shell_succeed << "EOF"
-var="a  b	c
+var=" a  b	c
 d "
 printf '[%s]' $var
 printf '\n'
@@ -228,26 +228,42 @@ IFS=
 printf '[%s]' x $var
 printf '\n'
 var="a b"
+printf '[%s]' $var
+printf '\n'
+var="a b"
 unset IFS
 printf '[%s]' ${IFS=' '} $var
 printf '\n'
-# TODO: Test that multiple non-whitespace IFS character delimit multiple fields
-#IFS=x
-#var="xxa"
-#printf '[%s]' $var
-#printf '\n'
+IFS=x
+var="xxax"
+printf '[%s]' $var
+printf '\n'
+printf '[%s]' ${var}xb
+printf '\n'
+var="xxa"
+printf '[%s]' ${var}xb
+printf '\n'
+IFS='x '
+var="  xx  a xb"
+printf '[%s]' $var
+printf '\n'
 EOF
 assert_output << EOF
 [a][b][c][d]
 [a][b][c][d]
 [a][b	c
 d]
-[a  b	c
+[ a  b	c
 d ]
 [axb][a][b][][cd][e]
 [x]
 [x]
+[a b]
 [a][b]
+[][][a]
+[][][a][xb]
+[][][axb]
+[][][a][b]
 EOF
 
 end_test_set
