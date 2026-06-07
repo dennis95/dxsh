@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, 2019, 2020, 2021, 2022, 2025 Dennis Wölfing
+/* Copyright (c) 2018, 2019, 2020, 2021, 2022, 2025, 2026 Dennis Wölfing
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -43,6 +43,7 @@ enum {
     EXPAND_NO_FIELD_SPLIT = 1 << 0,
     EXPAND_PATHNAMES = 1 << 1,
     EXPAND_NO_QUOTES = 1 << 2,
+    EXPAND_ASSIGNMENT_WORD = 1 << 3,
 };
 
 NO_DISCARD ssize_t expand(const char* word, int flags, char*** result);

@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, 2019, 2020, 2021, 2022, 2025 Dennis Wölfing
+/* Copyright (c) 2018, 2019, 2020, 2021, 2022, 2025, 2026 Dennis Wölfing
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -535,7 +535,7 @@ static bool expandSimpleCommand(const struct SimpleCommand* simpleCommand,
             if (equals) {
                 *equals = '\0';
                 if (isRegularVariableName(simpleCommand->words[i])) {
-                    flags = EXPAND_NO_FIELD_SPLIT;
+                    flags = EXPAND_NO_FIELD_SPLIT | EXPAND_ASSIGNMENT_WORD;
                 }
                 *equals = '=';
             }
@@ -569,8 +569,8 @@ static bool expandSimpleCommand(const struct SimpleCommand* simpleCommand,
     }
 
     for (size_t i = 0; i < expanded->numAssignments; i++) {
-        expanded->assignments[i] =
-                expandWord(simpleCommand->assignmentWords[i]);
+        expanded->assignments[i] = expandWord2(
+                simpleCommand->assignmentWords[i], EXPAND_ASSIGNMENT_WORD);
         if (!expanded->assignments[i]) {
             freeExpandedSimpleCommand(expanded);
             return false;

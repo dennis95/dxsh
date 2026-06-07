@@ -1,4 +1,4 @@
-# Copyright (c) 2025 Dennis Wölfing
+# Copyright (c) 2025, 2026 Dennis Wölfing
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -13,7 +13,7 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 tests_failed=false
-current_test_failed=false
+current_test_passing=true
 unset current_test_case
 
 # run_shell [ARGS...]
@@ -33,7 +33,7 @@ test_shell() {
 test_case() {
     end_test
     current_test_case=$1
-    current_test_failed=false
+    current_test_passing=true
 }
 
 # fail_test MESSAGE
@@ -41,8 +41,16 @@ test_case() {
 # executing.
 fail_test() {
     echo "$current_test_case FAILED: $1"
-    current_test_failed=true
+    current_test_passing=false
     tests_failed=true
+}
+
+# skip_test MESSAGE
+# Mark the current test case as skipped. The test case will still continue
+# executing.
+skip_test() {
+    echo "$current_test_case SKIPPED: $1"
+    current_test_passing=false
 }
 
 # test_shell_success [ARGS...]
@@ -80,7 +88,7 @@ assert_stderr() {
 # Prints the success message for the current test case. Should not be called
 # directly.
 end_test() {
-    if test -n "$current_test_case" && ! $current_test_failed; then
+    if test -n "$current_test_case" && $current_test_passing; then
         echo "$current_test_case PASSED"
     fi
 }

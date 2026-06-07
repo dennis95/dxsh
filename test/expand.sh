@@ -16,7 +16,40 @@
 
 # Tests for POSIX XSH 2.6 Word Expansions.
 
-# TODO: Tilde expansion, arithmetic expansion
+# TODO: arithmetic expansion
+
+test_case 'expand:tilde:simple'
+test_shell_succeed << "EOF"
+export HOME="/path/to  /home"
+echo ~/~
+echo ~/foo
+var=~:~/foo
+echo "$var"
+EOF
+assert_output << EOF
+/path/to  /home/~
+/path/to  /home/foo
+/path/to  /home:/path/to  /home/foo
+EOF
+
+test_case 'expand:tilde:username'
+root_home=$(echo ~root)
+case "$root_home" in
+/*)
+    test_shell_succeed << "EOF"
+echo ~root
+echo ~root/foo
+var=~root:~root/foo
+echo "$var"
+EOF
+    assert_output << EOF
+$root_home
+$root_home/foo
+$root_home:$root_home/foo
+EOF
+    ;;
+*) skip_test "Unable to determine home directory of root";;
+esac
 
 test_case 'expand:parameter:simple'
 test_shell_succeed << "EOF"

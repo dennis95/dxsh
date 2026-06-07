@@ -21,6 +21,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <err.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -36,6 +37,8 @@ static bool doCommandSubstitution(const char** word,
         bool doubleQuoted, bool oldStyle);
 static ssize_t doDollarSubstitutions(const char* word, bool doubleQuoted,
         struct StringBuffer* sb, struct ExpandContext* context);
+static ssize_t doTildeSubstitution(const char* word, struct StringBuffer* sb,
+        struct ExpandContext* context);
 static char* doSubstitutions(const char* word, struct ExpandContext* context);
 static size_t splitFields(char* word, struct ExpandContext* context,
         char*** result);
@@ -460,9 +463,42 @@ static ssize_t doDollarSubstitutions(const char* word, bool doubleQuoted,
     return word - begin;
 }
 
+static ssize_t doTildeSubstitution(const char* word, struct StringBuffer* sb,
+        struct ExpandContext* context) {
+    size_t prefixLength = strcspn(word, "/'\"\\$:");
+    const char* home;
+    if (prefixLength == 0) {
+        home = getVariable("HOME");
+        if (!home) {
+            home = "~";
+        }
+    } else {
+        char* user = strndup(word, prefixLength);
+        if (!user) err(1, "malloc");
+        struct passwd* entry = getpwnam(user);
+        free(user);
+        if (!entry) return -1;
+        home = entry->pw_dir;
+    }
+
+    size_t homeLength = strlen(home);
+    if (homeLength > 0 && home[homeLength - 1] == '/' &&
+            word[prefixLength] == '/') {
+        // Consume the slash to avoid producing a double slash at the end.
+        prefixLength++;
+    }
+
+    substitute(home, sb, context, true, false);
+    return prefixLength;
+}
+
 static char* doSubstitutions(const char* word, struct ExpandContext* context) {
     struct StringBuffer sb;
     initStringBuffer(&sb);
+
+    bool allowTilde = true;
+    bool assignment = context->flags & EXPAND_ASSIGNMENT_WORD;
+    bool equalsSignSeen = false;
 
     bool noQuotes = context->flags & EXPAND_NO_QUOTES;
     bool escaped = false;
@@ -471,6 +507,8 @@ static char* doSubstitutions(const char* word, struct ExpandContext* context) {
 
     while (*word) {
         char c = *word++;
+        bool tilde = allowTilde && c == '~';
+        allowTilde = false;
 
         if (!singleQuote && c == '\\') {
             escaped = !escaped;
@@ -478,6 +516,11 @@ static char* doSubstitutions(const char* word, struct ExpandContext* context) {
             singleQuote = !singleQuote;
         } else if (!escaped && !noQuotes && !singleQuote && c == '"') {
             doubleQuote = !doubleQuote;
+        } else if (assignment && !equalsSignSeen && c == '=') {
+            equalsSignSeen = true;
+            allowTilde = true;
+        } else if (assignment && c == ':') {
+            allowTilde = true;
         } else if (!escaped && !singleQuote && c == '$') {
             ssize_t length = doDollarSubstitutions(word, doubleQuote, &sb,
                     context);
@@ -495,6 +538,15 @@ static char* doSubstitutions(const char* word, struct ExpandContext* context) {
                 warnx("invalid substitution");
                 return NULL;
             }
+            continue;
+        } else if (!escaped && !singleQuote && !doubleQuote && tilde) {
+            ssize_t length = doTildeSubstitution(word, &sb, context);
+            if (length < 0) {
+                free(sb.buffer);
+                warnx("invalid substitution");
+                return NULL;
+            }
+            word += length;
             continue;
         }
 
