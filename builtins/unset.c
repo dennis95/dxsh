@@ -1,4 +1,4 @@
-/* Copyright (c) 2020, 2022, 2025 Dennis Wölfing
+/* Copyright (c) 2020, 2022, 2025, 2026 Dennis Wölfing
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -59,7 +59,10 @@ int unset(int argc, char* argv[]) {
             continue;
         }
         if (variable) {
-            unsetVariable(argv[i]);
+            if (!unsetVariable(argv[i])) {
+                warnx("unset: cannot unset readonly variable '%s'", argv[i]);
+                success = false;
+            }
         }
         if (function) {
             unsetFunction(argv[i]);

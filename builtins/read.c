@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, 2025 Dennis Wölfing
+/* Copyright (c) 2023, 2025, 2026 Dennis Wölfing
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -147,7 +147,11 @@ int sh_read(int argc, char* argv[]) {
         }
 
         char* value = finishStringBuffer(&buffer);
-        setVariable(argv[i], value, false);
+        if (!setVariable(argv[i], value, 0)) {
+            warnx("read: cannot set readonly variable '%s'", argv[i]);
+            free(value);
+            return 1;
+        }
         free(value);
     }
 

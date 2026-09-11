@@ -1,4 +1,4 @@
-/* Copyright (c) 2020, 2022, 2025, 2026 Dennis Wölfing
+/* Copyright (c) 2026 Dennis Wölfing
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -13,8 +13,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* builtins/export.c
- * Export environment variables.
+/* builtins/readonly.c
+ * Make variables readonly.
  */
 
 #include <config.h>
@@ -24,7 +24,7 @@
 #include "builtins.h"
 #include "../variables.h"
 
-int export(int argc, char* argv[]) {
+int readonly(int argc, char* argv[]) {
     bool print = false;
     int i;
     for (i = 1; i < argc; i++) {
@@ -37,19 +37,19 @@ int export(int argc, char* argv[]) {
             if (argv[i][j] == 'p') {
                 print = true;
             } else {
-                warnx("export: invalid option '-%c'", argv[i][j]);
+                warnx("readonly: invalid option '-%c'", argv[i][j]);
                 return 1;
             }
         }
     }
 
     if (print && i < argc) {
-        warnx("export: extra operand '%s'", argv[i]);
+        warnx("readonly: extra operand '%s'", argv[i]);
         return 1;
     }
 
     if (print || i == argc) {
-        printVariables("export ", VAR_EXPORTED);
+        printVariables("readonly ", VAR_READONLY);
         return 0;
     }
 
@@ -59,12 +59,12 @@ int export(int argc, char* argv[]) {
         if (equals) *equals = '\0';
 
         if (!isRegularVariableName(argv[i])) {
-            warnx("export: '%s' is not a valid name", argv[i]);
+            warnx("readonly: '%s' is not a valid name", argv[i]);
             success = false;
             continue;
         }
-        if (!setVariable(argv[i], equals ? equals + 1 : NULL, VAR_EXPORTED)) {
-            warnx("export: cannot set readonly variable '%s'", argv[i]);
+        if (!setVariable(argv[i], equals ? equals + 1 : NULL, VAR_READONLY)) {
+            warnx("readonly: cannot set readonly variable '%s'", argv[i]);
             success = false;
         }
     }

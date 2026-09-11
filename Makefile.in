@@ -1,4 +1,4 @@
-# Copyright (c) 2018, 2019, 2020, 2021, 2022, 2025 Dennis Wölfing
+# Copyright (c) 2018, 2019, 2020, 2021, 2022, 2025, 2026 Dennis Wölfing
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -60,6 +60,7 @@ SRC = \
 	builtins/exit.c \
 	builtins/export.c \
 	builtins/read.c \
+	builtins/readonly.c \
 	builtins/return.c \
 	builtins/set.c \
 	builtins/shift.c \

@@ -413,7 +413,10 @@ static int executeFor(struct ForClause* clause) {
     int status = 0;
     size_t i;
     for (i = 0; i < numItems; i++) {
-        setVariable(clause->name, items[i], false);
+        if (!setVariable(clause->name, items[i], 0)) {
+            warnx("cannot set readonly variable '%s'", clause->name);
+            return 1;
+        }
         status = executeList(&clause->body);
         if (returning) break;
         if (numBreaks) {
@@ -503,7 +506,7 @@ static int executeCase(struct CaseClause* clause) {
 
 static bool isDeclarationUtility(char** words, size_t numWords) {
     if (numWords == 0) return false;
-    if (strcmp(words[0], "export") == 0) {
+    if (strcmp(words[0], "export") == 0 || strcmp(words[0], "readonly") == 0) {
         return true;
     }
     if (strcmp(words[0], "command") == 0) {
@@ -633,7 +636,7 @@ int executeExpandedCommand(struct ExpandedSimpleCommand* expanded,
             if (!builtin || !(builtin->flags & BUILTIN_SPECIAL)) {
                 pushVariable(expanded->assignments[i], equals + 1);
             } else {
-                setVariable(expanded->assignments[i], equals + 1, false);
+                setVariable(expanded->assignments[i], equals + 1, 0);
             }
             free(expanded->assignments[i]);
         }

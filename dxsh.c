@@ -1,4 +1,4 @@
-/* Copyright (c) 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2025 Dennis Wölfing
+/* Copyright (c) 2016-2022, 2025, 2026 Dennis Wölfing
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -101,7 +101,7 @@ int main(int argc, char* argv[]) {
     } else {
         pwd = getcwd(NULL, 0);
         if (pwd) {
-            setVariable("PWD", pwd, true);
+            setVariable("PWD", pwd, VAR_EXPORTED);
         }
     }
 
@@ -126,7 +126,7 @@ int main(int argc, char* argv[]) {
         char buffer[sizeof(pid_t) * 3];
         pid_t ppid = getppid();
         snprintf(buffer, sizeof(buffer), "%jd", (intmax_t) ppid);
-        setVariable("PPID", buffer, false);
+        setVariable("PPID", buffer, 0);
     }
 
     inputFd = 0;

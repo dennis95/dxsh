@@ -1,4 +1,4 @@
-/* Copyright (c) 2025 Dennis Wölfing
+/* Copyright (c) 2025, 2026 Dennis Wölfing
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -31,6 +31,7 @@ int exec(int argc, char* argv[]);
 int sh_exit(int argc, char* argv[]);
 int export(int argc, char* argv[]);
 int sh_read(int argc, char* argv[]);
+int readonly(int argc, char* argv[]);
 int sh_return(int argc, char* argv[]);
 int set(int argc, char* argv[]);
 int shift(int argc, char* argv[]);

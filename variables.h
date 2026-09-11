@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, 2020, 2021, 2022, 2025 Dennis Wölfing
+/* Copyright (c) 2019, 2020, 2021, 2022, 2025, 2026 Dennis Wölfing
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -26,6 +26,12 @@
 struct ShellVar {
     char* name;
     char* value;
+    int attributes;
+};
+
+enum {
+    VAR_EXPORTED = 1 << 0,
+    VAR_READONLY = 1 << 1,
 };
 
 extern char** arguments;
@@ -37,9 +43,9 @@ const char* getVariable(const char* name);
 void initializeVariables(void);
 bool isRegularVariableName(const char* s);
 void popVariables(void);
-void printVariables(bool exported);
+void printVariables(const char* prefix, int attributes);
 void pushVariable(const char* name, const char* value);
-void setVariable(const char* name, const char* value, bool export);
-void unsetVariable(const char* name);
+bool setVariable(const char* name, const char* value, int attributes);
+bool unsetVariable(const char* name);
 
 #endif

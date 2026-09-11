@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, 2020, 2021, 2022, 2025 Dennis Wölfing
+/* Copyright (c) 2019, 2020, 2021, 2022, 2025, 2026 Dennis Wölfing
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -119,9 +119,10 @@ void initializeVariables(void) {
         variables[variablesAllocated].name = strndup(*envp, nameLength);
         if (!variables[variablesAllocated].name) err(1, "strdup");
         variables[variablesAllocated].value = NULL;
+        variables[variablesAllocated].attributes = VAR_EXPORTED;
         variablesAllocated++;
     }
-    setVariable("IFS", " \t\n", false);
+    setVariable("IFS", " \t\n", 0);
 }
 
 bool isRegularVariableName(const char* s) {
@@ -143,22 +144,24 @@ void popVariables(void) {
     variablesPushed = 0;
 }
 
-void printVariables(bool exported) {
+void printVariables(const char* prefix, int attributes) {
     for (size_t i = 0; i < variablesAllocated; i++) {
         struct ShellVar* var = &variables[i];
         const char* value;
+        if ((var->attributes & attributes) != attributes) {
+            continue;
+        }
         if (var->value) {
-            if (exported) continue;
             value = var->value;
         } else {
             value = getenv(var->name);
         }
         if (value) {
-            printf("%s%s=", exported ? "export " : "", var->name);
+            printf("%s%s=", prefix, var->name);
             printQuoted(value);
             fputc('\n', stdout);
         } else {
-            printf("export %s\n", var->name);
+            printf("%s%s\n", prefix, var->name);
         }
     }
 }
@@ -176,23 +179,27 @@ void pushVariable(const char* name, const char* value) {
     variablesPushed++;
 }
 
-void setVariable(const char* name, const char* value, bool export) {
+// value == NULL: only set attributes
+bool setVariable(const char* name, const char* value, int attributes) {
     for (size_t i = 0; i < variablesAllocated; i++) {
         struct ShellVar* var = &variables[i];
         if (strcmp(name, var->name) == 0) {
-            if (!export && var->value) {
-                free(var->value);
-                var->value = strdup(value);
-                if (!var->value) err(1, "strdup");
-            } else {
+            if (value && var->attributes & VAR_READONLY) return false;
+
+            if (attributes & VAR_EXPORTED || var->attributes & VAR_EXPORTED) {
                 if (!value) value = var->value;
                 if (value && setenv(name, value, 1) < 0) {
                     err(1, "setenv");
                 }
                 free(var->value);
                 var->value = NULL;
+            } else if (value) {
+                free(var->value);
+                var->value = strdup(value);
+                if (!var->value) err(1, "strdup");
             }
-            return;
+            var->attributes |= attributes;
+            return true;
         }
     }
 
@@ -200,9 +207,12 @@ void setVariable(const char* name, const char* value, bool export) {
             sizeof(struct ShellVar));
     if (!variables) err(1, "malloc");
     variables[variablesAllocated].name = strdup(name);
-    variables[variablesAllocated].value = export ? NULL : strdup(value);
+    bool export = attributes & VAR_EXPORTED;
+    variables[variablesAllocated].value = export || !value ?
+            NULL : strdup(value);
+    variables[variablesAllocated].attributes = attributes;
     if (!variables[variablesAllocated].name ||
-            (!export && !variables[variablesAllocated].value)) {
+            (!export && value && !variables[variablesAllocated].value)) {
         err(1, "strdup");
     }
     variablesAllocated++;
@@ -210,11 +220,14 @@ void setVariable(const char* name, const char* value, bool export) {
     if (export && value) {
         if (setenv(name, value, 1) < 0) err(1, "setenv");
     }
+    return true;
 }
 
-void unsetVariable(const char* name) {
+bool unsetVariable(const char* name) {
     for (size_t i = 0; i < variablesAllocated; i++) {
         if (strcmp(name, variables[i].name) == 0) {
+            if (variables[i].attributes & VAR_READONLY) return false;
+
             if (!variables[i].value) {
                 unsetenv(name);
             }
@@ -222,7 +235,8 @@ void unsetVariable(const char* name) {
             free(variables[i].value);
             variables[i] = variables[variablesAllocated - 1];
             variablesAllocated--;
-            return;
+            return true;
         }
     }
+    return true;
 }

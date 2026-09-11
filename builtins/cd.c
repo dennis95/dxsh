@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, 2019, 2021, 2025 Dennis Wölfing
+/* Copyright (c) 2018, 2019, 2021, 2025, 2026 Dennis Wölfing
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -212,12 +212,18 @@ int cd(int argc, char* argv[]) {
     }
 
     if (pwd) {
-        setVariable("PWD", pwd, true);
+        if (!setVariable("PWD", pwd, VAR_EXPORTED)) {
+            warnx("cd: cannot set readonly variable 'PWD'");
+            status = 2;
+        }
     } else {
         unsetVariable("PWD");
     }
     if (oldPwd) {
-        setVariable("OLDPWD", oldPwd, true);
+        if (!setVariable("OLDPWD", oldPwd, VAR_EXPORTED)) {
+            warnx("cd: cannot set readonly variable 'OLDPWD'");
+            status = 2;
+        }
         free(oldPwd);
     } else {
         unsetVariable("OLDPWD");

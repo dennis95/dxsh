@@ -314,7 +314,21 @@ some test value
 1 2
 EOF
 
-# TODO: readonly
+test_case 'builtins:special:readonly'
+assert_special_builtin readonly "readonly a=b"
+test_shell_succeed << "EOF"
+x=X
+unset y
+readonly x y z=Z
+echo ${x--} ${y--} ${z--}
+readonly -p | grep '^readonly y$'
+# TODO: Test restoring readonly vars
+# TODO: Test that assigning to readonly variables fails
+EOF
+assert_output << EOF
+X - Z
+readonly y
+EOF
 
 test_case 'builtins:special:return'
 assert_special_builtin return

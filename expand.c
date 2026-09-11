@@ -346,7 +346,12 @@ static ssize_t doDollarSubstitutions(const char* word, bool doubleQuoted,
                     char* subst = strndup(word, wordLength);
                     if (!subst) err(1, "strdup");
                     value = expandWord(subst);
-                    setVariable(name, value, false);
+                    if (!setVariable(name, value, 0)) {
+                        warnx("cannot set readonly variable '%s'", name);
+                        free((void*) value);
+                        free(subst);
+                        return -2;
+                    }
                     toBeFreed = (void*) value;
                     free(subst);
                 }

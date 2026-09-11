@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, 2019, 2020, 2021, 2022, 2023, 2025 Dennis Wölfing
+/* Copyright (c) 2018, 2019, 2020, 2021, 2022, 2023, 2025, 2026 Dennis Wölfing
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -36,6 +36,7 @@ const struct builtin builtins[] = {
     { "exit", sh_exit, BUILTIN_SPECIAL },
     { "export", export, BUILTIN_SPECIAL },
     { "read", sh_read, 0 },
+    { "readonly", readonly, BUILTIN_SPECIAL },
     { "return", sh_return, BUILTIN_SPECIAL },
     { "set", set, BUILTIN_SPECIAL },
     { "shift", shift, BUILTIN_SPECIAL },
