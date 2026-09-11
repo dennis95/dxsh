@@ -19,6 +19,7 @@
 
 #include <config.h>
 #include <err.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "builtins.h"
@@ -50,6 +51,11 @@ int export(int argc, char* argv[]) {
 
     if (print || i == argc) {
         printVariables("export ", VAR_EXPORTED);
+        if (fflush(stdout) == EOF || ferror(stdout)) {
+            warnx("export: failed to write to standard output");
+            clearerr(stdout);
+            return 1;
+        }
         return 0;
     }
 

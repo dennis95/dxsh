@@ -84,6 +84,11 @@ int set(int argc, char* argv[]) {
                 const char* option = argv[++i];
                 if (!option) {
                     printOptions(plusOption);
+                    if (fflush(stdout) == EOF || ferror(stdout)) {
+                        warnx("set: failed to write to standard output");
+                        clearerr(stdout);
+                        return 1;
+                    }
                     return 0;
                 }
 
@@ -98,6 +103,11 @@ int set(int argc, char* argv[]) {
 
     if (argc == 1) {
         printVariables("", 0);
+        if (fflush(stdout) == EOF || ferror(stdout)) {
+            warnx("set: failed to write to standard output");
+            clearerr(stdout);
+            return 1;
+        }
         return 0;
     }
 

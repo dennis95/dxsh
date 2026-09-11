@@ -19,6 +19,7 @@
 
 #include <config.h>
 #include <err.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "builtins.h"
@@ -50,6 +51,11 @@ int readonly(int argc, char* argv[]) {
 
     if (print || i == argc) {
         printVariables("readonly ", VAR_READONLY);
+        if (fflush(stdout) == EOF || ferror(stdout)) {
+            warnx("readonly: failed to write to standard output");
+            clearerr(stdout);
+            return 1;
+        }
         return 0;
     }
 

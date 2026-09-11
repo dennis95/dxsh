@@ -1,4 +1,4 @@
-/* Copyright (c) 2022, 2025 Dennis Wölfing
+/* Copyright (c) 2022, 2025, 2026 Dennis Wölfing
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -248,6 +248,12 @@ int trap(int argc, char* argv[]) {
                 printf(" %s\n", buffer);
             }
         }
+
+        if (fflush(stdout) == EOF || ferror(stdout)) {
+            warnx("trap: failed to write to standard output");
+            clearerr(stdout);
+            return 1;
+        }
         return 0;
     } else if (print) {
         for (; i < argc; i++) {
@@ -269,6 +275,12 @@ int trap(int argc, char* argv[]) {
             fputs("trap -- ", stdout);
             printQuoted(action);
             printf(" %s\n", buffer);
+        }
+
+        if (fflush(stdout) == EOF || ferror(stdout)) {
+            warnx("trap: failed to write to standard output");
+            clearerr(stdout);
+            return 1;
         }
         return status;
     }

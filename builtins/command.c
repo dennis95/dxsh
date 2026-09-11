@@ -1,4 +1,4 @@
-/* Copyright (c) 2025 Dennis Wölfing
+/* Copyright (c) 2025, 2026 Dennis Wölfing
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -98,6 +98,12 @@ int command(int argc, char* argv[]) {
             } else {
                 printf("%s is a shell reserved word\n", command);
             }
+
+            if (fflush(stdout) == EOF || ferror(stdout)) {
+                warnx("command: failed to write to standard output");
+                clearerr(stdout);
+                return 1;
+            }
             return 0;
         }
 
@@ -141,6 +147,11 @@ int command(int argc, char* argv[]) {
             }
         }
 
+        if (fflush(stdout) == EOF || ferror(stdout)) {
+            warnx("command: failed to write to standard output");
+            clearerr(stdout);
+            return 1;
+        }
         return 0;
     }
 

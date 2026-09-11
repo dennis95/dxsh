@@ -296,14 +296,13 @@ assert_special_builtin export "export a=b"
 test_shell_succeed << "EOF"
 export env_var="some test value"
 echo $env_var
-# TODO: Test restoring env vars
-#reset_env_var=$(export -p | grep '^export env_var=')
+reset_env_var=$(export -p | grep '^export env_var=')
 unset env_var
 echo $env_var
 export env_var
-#export -p | grep '^export env_var$'
-#eval "$reset_env_var"
-#echo $env_var
+export -p | grep '^export env_var$'
+eval "$reset_env_var"
+echo $env_var
 unset a b c
 export a=1 b c=2
 echo $a $b $c
@@ -311,6 +310,8 @@ EOF
 assert_output << EOF
 some test value
 
+export env_var
+some test value
 1 2
 EOF
 
@@ -322,12 +323,15 @@ unset y
 readonly x y z=Z
 echo ${x--} ${y--} ${z--}
 readonly -p | grep '^readonly y$'
-# TODO: Test restoring readonly vars
+restore_ro_var=$(readonly var=value; readonly -p | grep '^readonly var=')
+eval "$restore_ro_var"
+echo $var
 # TODO: Test that assigning to readonly variables fails
 EOF
 assert_output << EOF
 X - Z
 readonly y
+value
 EOF
 
 test_case 'builtins:special:return'
@@ -376,10 +380,9 @@ test_case 'builtins:special:set'
 assert_special_builtin set "set --"
 test_shell_succeed << "EOF"
 foo=x
-# TODO: Test output of set
-#reset_foo=$(set | grep '^foo=')
-#foo=wrong
-#eval "$reset_foo"
+reset_foo=$(set | grep '^foo=')
+foo=wrong
+eval "$reset_foo"
 echo $foo
 set one two three
 echo $@

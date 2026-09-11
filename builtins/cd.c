@@ -208,7 +208,11 @@ int cd(int argc, char* argv[]) {
 
     if (printPwd && pwd) {
         puts(pwd);
-        fflush(stdout);
+        if (fflush(stdout) == EOF || ferror(stdout)) {
+            warnx("cd: failed to write to standard output");
+            clearerr(stdout);
+            status = 2;
+        }
     }
 
     if (pwd) {

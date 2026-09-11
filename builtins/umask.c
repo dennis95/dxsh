@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, 2025 Dennis Wölfing
+/* Copyright (c) 2018, 2025, 2026 Dennis Wölfing
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -41,6 +41,12 @@ int sh_umask(int argc, char* argv[]) {
         mode_t mask = umask(0);
         umask(mask);
         printf("%.4o\n", (unsigned int) mask);
+
+        if (fflush(stdout) == EOF || ferror(stdout)) {
+            warnx("umask: failed to write to standard output");
+            clearerr(stdout);
+            return 1;
+        }
     }
     return 0;
 }
