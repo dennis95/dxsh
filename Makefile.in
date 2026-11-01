@@ -38,6 +38,7 @@ transform = @program_transform_name@
 LIBOBJDIR = compat/
 
 SRC = \
+	arithmetic.c \
 	builtins.c \
 	dxsh.c \
 	execute.c \
@@ -68,6 +69,7 @@ SRC = \
 	builtins/unset.c
 
 HEADERS = \
+	arithmetic.h \
 	builtins.h \
 	dxsh.h \
 	execute.h \
@@ -88,7 +90,7 @@ distdir = @PACKAGE_NAME@-@PACKAGE_VERSION@
 DISTFILES = builtins/ $(SRC) $(HEADERS) \
 	compat/ compat/sig2str.c compat/signalnames.c compat/signalnames.h \
 	compat/str2sig.c compat/tcgetwinsize.c \
-	m4/ m4/check-cflags.m4 m4/tcgetwinsize.m4 \
+	m4/ m4/check-cflags.m4 m4/shell-int.m4 m4/tcgetwinsize.m4 \
 	test/ test/builtins.sh test/commands.sh test/expand.sh test/libtest.sh \
 	test/parameters.sh test/pattern.sh test/quoting.sh test/redirection.sh \
 	test/run-tests \

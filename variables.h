@@ -39,6 +39,7 @@ extern int numArguments;
 extern struct ShellVar* variables;
 extern size_t variablesAllocated;
 
+size_t getRegularVariableNameLength(const char* s);
 const char* getVariable(const char* name);
 void initializeVariables(void);
 bool isRegularVariableName(const char* s);

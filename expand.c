@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "arithmetic.h"
 #include "execute.h"
 #include "expand.h"
 #include "match.h"
@@ -216,6 +217,59 @@ static bool readInputFromString(const char** str, bool newCommand,
     if (!*word) return false;
     *str = *word;
     *word = NULL;
+    return true;
+}
+
+static bool doArithmeticSubstitution(const char** word,
+        struct StringBuffer* sb, struct ExpandContext* context,
+        bool doubleQuoted) {
+    // Find the end of the expression by counting parentheses.
+    size_t expressionLength = 0;
+    size_t parentheses = 0;
+    while (true) {
+        char c = (*word)[expressionLength];
+        if (c == '(') {
+            parentheses++;
+        } else if (c == ')' && parentheses > 0) {
+            parentheses--;
+        } else if (c == ')' && parentheses == 0 &&
+                (*word)[expressionLength + 1] == ')') {
+            break;
+        } else if (c == '\0') {
+            return false;
+        }
+
+        expressionLength++;
+    }
+
+    char* expression = strndup(*word, expressionLength);
+    if (!expression) err(1, "malloc");
+    (*word) += expressionLength + 2;
+    char* expanded = expandWord2(expression, EXPAND_NO_TILDE);
+    free(expression);
+    if (!expanded) return false;
+
+    ShellInt result;
+    if (!evaluateArithmeticExpression(expanded, &result)) {
+        return false;
+    }
+    free(expanded);
+
+    char buffer[sizeof(ShellInt) * 3];
+    snprintf(buffer, sizeof(buffer), "%"SHELL_INT_PRId, result);
+
+    struct SubstitutionInfo info;
+    info.begin = sb->used;
+
+    appendStringToStringBuffer(sb, buffer);
+    info.end = sb->used;
+    info.startField = 0;
+    info.endField = 0;
+    info.applyFieldSplitting = !doubleQuoted;
+    info.splitAtEnd = false;
+    addToArray((void**) &context->substitutions, &context->numSubstitutions,
+            &info, sizeof(info));
+
     return true;
 }
 
@@ -424,8 +478,16 @@ static ssize_t doDollarSubstitutions(const char* word, bool doubleQuoted,
         free(toBeFreed);
     } else if (c == '(') {
         word++;
-        if (!doCommandSubstitution(&word, sb, context, doubleQuoted, false)) {
-            return -1;
+        if (*word == '(') {
+            word++;
+            if (!doArithmeticSubstitution(&word, sb, context, doubleQuoted)) {
+                return -1;
+            }
+        } else {
+            if (!doCommandSubstitution(&word, sb, context, doubleQuoted,
+                    false)) {
+                return -1;
+            }
         }
     } else if (c == '*' || c == '@') {
         bool splitting = !doubleQuoted &&
@@ -501,7 +563,7 @@ static char* doSubstitutions(const char* word, struct ExpandContext* context) {
     struct StringBuffer sb;
     initStringBuffer(&sb);
 
-    bool allowTilde = true;
+    bool allowTilde = !(context->flags & EXPAND_NO_TILDE);
     bool assignment = context->flags & EXPAND_ASSIGNMENT_WORD;
     bool equalsSignSeen = false;
 

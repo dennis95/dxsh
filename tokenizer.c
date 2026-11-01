@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, 2019, 2020, 2021, 2022, 2025 Dennis Wölfing
+/* Copyright (c) 2018, 2019, 2020, 2021, 2022, 2025, 2026 Dennis Wölfing
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -49,6 +49,7 @@ void initTokenizer(struct Tokenizer* tokenizer,
     tokenizer->input = NULL;
     tokenizer->readInput = readInput;
     tokenizer->context = context;
+    tokenizer->numParenthesesInArith = 0;
 
     initStringBuffer(&tokenizer->buffer);
 }
@@ -194,6 +195,7 @@ enum TokenizerResult splitTokens(struct Tokenizer* tokenizer) {
         if (!escaped) {
             if (tokenizer->tokenStatus != TOKEN_SINGLE_QUOTED &&
                     tokenizer->tokenStatus != TOKEN_DOUBLE_QUOTED &&
+                    tokenizer->tokenStatus != TOKEN_ARITHMETIC_EXP &&
                     c == '\'') {
                 nest(tokenizer, TOKEN_SINGLE_QUOTED);
                 goto appendAndNext;
@@ -206,6 +208,7 @@ enum TokenizerResult splitTokens(struct Tokenizer* tokenizer) {
 
             if (tokenizer->tokenStatus != TOKEN_DOUBLE_QUOTED &&
                     tokenizer->tokenStatus != TOKEN_SINGLE_QUOTED &&
+                    tokenizer->tokenStatus != TOKEN_ARITHMETIC_EXP &&
                     c == '"') {
                 nest(tokenizer, TOKEN_DOUBLE_QUOTED);
                 goto appendAndNext;
@@ -224,6 +227,11 @@ enum TokenizerResult splitTokens(struct Tokenizer* tokenizer) {
             if (tokenizer->wordStatus == WORDSTATUS_DOLLAR_SIGN) {
                 if (c == '{') {
                     nest(tokenizer, TOKEN_PARAMETER_EXP);
+                    goto appendAndNext;
+                } else if (c == '(' && tokenizer->input[1] == '(') {
+                    nest(tokenizer, TOKEN_ARITHMETIC_EXP);
+                    appendToStringBuffer(&tokenizer->buffer, c);
+                    tokenizer->input++;
                     goto appendAndNext;
                 } else if (c == '(') {
                     appendToStringBuffer(&tokenizer->buffer, c);
@@ -246,6 +254,26 @@ enum TokenizerResult splitTokens(struct Tokenizer* tokenizer) {
             }
 
             if (tokenizer->tokenStatus == TOKEN_PARAMETER_EXP && c == '}') {
+                unnest(tokenizer);
+                goto appendAndNext;
+            }
+
+            if (tokenizer->tokenStatus == TOKEN_ARITHMETIC_EXP && c == '(') {
+                tokenizer->numParenthesesInArith++;
+                goto appendAndNext;
+            }
+
+            if (tokenizer->tokenStatus == TOKEN_ARITHMETIC_EXP &&
+                    tokenizer->numParenthesesInArith > 0 && c == ')') {
+                tokenizer->numParenthesesInArith--;
+                goto appendAndNext;
+            }
+
+            if (tokenizer->tokenStatus == TOKEN_ARITHMETIC_EXP &&
+                    tokenizer->numParenthesesInArith == 0 && c == ')' &&
+                    tokenizer->input[1] == ')') {
+                appendToStringBuffer(&tokenizer->buffer, c);
+                tokenizer->input++;
                 unnest(tokenizer);
                 goto appendAndNext;
             }

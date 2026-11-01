@@ -1,4 +1,5 @@
 m4_include([m4/check-cflags.m4])
+m4_include([m4/shell-int.m4])
 m4_include([m4/tcgetwinsize.m4])
 
 AC_PREREQ([2.71])
@@ -8,12 +9,16 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_LIBOBJ_DIR([compat])
 AC_ARG_PROGRAM
 
+DX_WITH_SHELL_INT
+
 AC_PROG_CC
 AC_USE_SYSTEM_EXTENSIONS
 AC_SYS_LARGEFILE
 
 AC_PROG_INSTALL
 AC_CHECK_TOOL([STRIP], [strip], [:])
+
+AC_CHECK_HEADERS([stdckdint.h])
 
 DX_FUNC_TCGETWINSIZE
 AC_REPLACE_FUNCS([sig2str str2sig])

@@ -1,4 +1,4 @@
-/* Copyright (c) 2018, 2019, 2020, 2022 Dennis Wölfing
+/* Copyright (c) 2018, 2019, 2020, 2022, 2026 Dennis Wölfing
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -37,6 +37,7 @@ enum TokenStatus {
     TOKEN_TOPLEVEL,
     TOKEN_DOUBLE_QUOTED,
     TOKEN_PARAMETER_EXP,
+    TOKEN_ARITHMETIC_EXP,
 
     TOKEN_COMMENT,
     TOKEN_SINGLE_QUOTED,
@@ -83,6 +84,7 @@ struct Tokenizer {
     const char* input;
     bool (*readInput)(const char** str, bool newCommand, void* context);
     void* context;
+    size_t numParenthesesInArith;
 };
 
 void initTokenizer(struct Tokenizer* tokenizer,

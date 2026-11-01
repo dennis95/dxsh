@@ -44,6 +44,7 @@ enum {
     EXPAND_PATHNAMES = 1 << 1,
     EXPAND_NO_QUOTES = 1 << 2,
     EXPAND_ASSIGNMENT_WORD = 1 << 3,
+    EXPAND_NO_TILDE = 1 << 4,
 };
 
 NO_DISCARD ssize_t expand(const char* word, int flags, char*** result);

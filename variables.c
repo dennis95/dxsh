@@ -133,6 +133,15 @@ bool isRegularVariableName(const char* s) {
     return true;
 }
 
+size_t getRegularVariableNameLength(const char* s) {
+    if (!isalpha(*s) && *s != '_') return 0;
+    size_t i;
+    for (i = 1; s[i]; i++) {
+        if (!isalnum(s[i]) && s[i] != '_') break;
+    }
+    return i;
+}
+
 void popVariables(void) {
     for (size_t i = 0; i < variablesPushed; i++) {
         free(pushedVars[i].name);
