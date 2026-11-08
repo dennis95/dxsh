@@ -86,7 +86,7 @@ rm -rf foo bar
 test_case 'commands:pipeline'
 test_shell_succeed << "EOF"
 echo World | { echo Hello; cat; }
-echo abc | echo def | echo ghi
+echo abc 2>/dev/null | echo def 2>/dev/null | echo ghi
 ! (exit 42)
 echo $?
 ! (exit 0)
